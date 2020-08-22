@@ -98,11 +98,10 @@ app.layout = html.Div([
     ],className="six columns"),
 
     ], className="row")
+])
 
 
 
 
-
-# ------------------------------------------------------------------------------
 if __name__ == '__main__':
     app.run_server(debug=True)
