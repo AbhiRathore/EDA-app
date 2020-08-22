@@ -29,6 +29,7 @@ trace1 = go.Bar(x=pv.index, y=pv[('MILES', 'Business')], name='Business')
 trace2 = go.Bar(x=pv.index, y=pv[('MILES', 'Personal')], name='Personal')
 external_stylesheets =  ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__,external_stylesheets=external_stylesheets)
+server = app.server
 
 df_t2 = pd.DataFrame(df.groupby(['start_month_name'])['MILES'].agg('sum'))
 fig = px.line(df_t2.reset_index(), x = 'start_month_name', y = 'MILES')
