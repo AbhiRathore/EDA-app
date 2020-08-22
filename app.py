@@ -7,6 +7,10 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 from datetime import datetime
+external_stylesheets =  ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+
+app = dash.Dash(__name__,external_stylesheets=external_stylesheets)
+server = app.server
 
 df = pd.read_csv('uberdrive.csv')
 beesdf = pd.read_csv("intro_bees.csv")
@@ -27,9 +31,7 @@ pv = pd.pivot_table(df, index=['PURPOSE'], columns=["CATEGORY"], values=['MILES'
 
 trace1 = go.Bar(x=pv.index, y=pv[('MILES', 'Business')], name='Business')
 trace2 = go.Bar(x=pv.index, y=pv[('MILES', 'Personal')], name='Personal')
-external_stylesheets =  ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__,external_stylesheets=external_stylesheets)
-server = app.server
+
 
 df_t2 = pd.DataFrame(df.groupby(['start_month_name'])['MILES'].agg('sum'))
 fig = px.line(df_t2.reset_index(), x = 'start_month_name', y = 'MILES')
@@ -99,52 +101,6 @@ app.layout = html.Div([
 
 
 
-
-])
-
-
-# # ------------------------------------------------------------------------------
-# # Connect the Plotly graphs with Dash Components
-# @app.callback(
-#     [Output(component_id='example-graph2', component_property='children')]
-# )
-# def update_graph():
-#     df_t2 = pd.DataFrame(df.groupby(['start_month_name'])['MILES'].agg('sum'))
-#     fig = px.line(df_t2.reset_index(), x = 'start_month_name', y = 'MILES')
-    
-
-#     # # Plotly Express
-#     # fig = px.choropleth(
-#     #     data_frame=dff,
-#     #     locationmode='USA-states',
-#     #     locations='state_code',
-#     #     scope="usa",
-#     #     color='Pct of Colonies Impacted',
-#     #     hover_data=['State', 'Pct of Colonies Impacted'],
-#     #     color_continuous_scale=px.colors.sequential.YlOrRd,
-#     #     labels={'Pct of Colonies Impacted': '% of Bee Colonies'},
-#     #     template='plotly_dark'
-#     # )
-
-#     # Plotly Graph Objects (GO)
-#     # fig = go.Figure(
-#     #     data=[go.Choropleth(
-#     #         locationmode='USA-states',
-#     #         locations=dff['state_code'],
-#     #         z=dff["Pct of Colonies Impacted"].astype(float),
-#     #         colorscale='Reds',
-#     #     )]
-#     # )
-#     #
-#     # fig.update_layout(
-#     #     title_text="Bees Affected by Mites in the USA",
-#     #     title_xanchor="center",
-#     #     title_font=dict(size=24),
-#     #     title_x=0.5,
-#     #     geo=dict(scope='usa'),
-#     # )
-
-#     return  fig
 
 
 # ------------------------------------------------------------------------------
