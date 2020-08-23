@@ -105,6 +105,7 @@ def update_data(chosen_rows,piedropval,linedropval):
     if len(chosen_rows)==0:
         df_filterd = dff[dff['countriesAndTerritories'].isin(['China','Iran','Spain','Italy'])]
     else:
+        print("the code has reached here")
         print(chosen_rows)
         df_filterd = dff[dff.index.isin(chosen_rows)]
 
@@ -137,4 +138,4 @@ def update_data(chosen_rows,piedropval,linedropval):
 #------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
