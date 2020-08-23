@@ -1,107 +1,140 @@
 import pandas as pd
-import plotly.express as px  # (version 4.7.0)
-import plotly.graph_objects as go
+import plotly.express as px
 
-import dash  # (version 1.12.0) pip install dash
+import dash
+import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
-from datetime import datetime
-external_stylesheets =  ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__,external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__)
 server = app.server
 
-df = pd.read_csv('uberdrive.csv')
-beesdf = pd.read_csv("intro_bees.csv")
-df.columns = df.columns.str.replace("*", "")
-df = df[df['START_DATE'] != "Totals" ]
+#---------------------------------------------------------------
+#Taken from https://www.ecdc.europa.eu/en/geographical-distribution-2019-ncov-cases
+df = pd.read_csv("COVID-19-geographic-disbtribution-worldwide-2020-03-29.csv")
 
-df['start_dt'] = df['START_DATE'].apply(lambda x : datetime.strptime(x, '%m/%d/%Y %H:%M'))
-df['end_dt'] = df['END_DATE'].apply(lambda x : datetime.strptime(x, '%m/%d/%Y %H:%M'))
-
-
-df['start_day'] = df['start_dt'].dt.day
-df['start_hour'] = df['start_dt'].dt.hour
-df['start_month'] = df['start_dt'].dt.month
-df['start_month_name'] = df['start_dt'].dt.month_name()
-
-
-pv = pd.pivot_table(df, index=['PURPOSE'], columns=["CATEGORY"], values=['MILES'], aggfunc=sum, fill_value=0)
-
-trace1 = go.Bar(x=pv.index, y=pv[('MILES', 'Business')], name='Business')
-trace2 = go.Bar(x=pv.index, y=pv[('MILES', 'Personal')], name='Personal')
-
-
-df_t2 = pd.DataFrame(df.groupby(['start_month_name'])['MILES'].agg('sum'))
-fig = px.line(df_t2.reset_index(), x = 'start_month_name', y = 'MILES')
-
-fig2 = px.box(df,x = 'PURPOSE' ,y = 'MILES')
-
-fig3 = px.choropleth(
-        data_frame=beesdf,
-        locationmode='USA-states',
-        locations='state_code',
-        scope="usa",
-        color='Pct of Colonies Impacted',
-        hover_data=['State', 'Pct of Colonies Impacted'],
-        color_continuous_scale=px.colors.sequential.YlOrRd,
-        labels={'Pct of Colonies Impacted': '% of Bee Colonies'},
-        template='plotly_dark'
-    )
-# ------------------------------------------------------------------------------
-# App layout
-
+dff = df.groupby('countriesAndTerritories', as_index=False)[['deaths','cases']].sum()
+print (dff[:5])
+#---------------------------------------------------------------
 app.layout = html.Div([
-    html.H1('UBER drive analysis',style={'text-align': 'center'}),
+    html.Div([
+        dash_table.DataTable(
+            id='datatable_id',
+            data=dff.to_dict('records'),
+            columns=[
+                {"name": i, "id": i, "deletable": False, "selectable": False} for i in dff.columns
+            ],
+            editable=False,
+            filter_action="native",
+            sort_action="native",
+            sort_mode="multi",
+            row_selectable="multi",
+            row_deletable=False,
+            selected_rows=[],
+            page_action="native",
+            page_current= 0,
+            page_size= 6,
+            # page_action='none',
+            # style_cell={
+            # 'whiteSpace': 'normal'
+            # },
+            # fixed_rows={ 'headers': True, 'data': 0 },
+            # virtualization=False,
+            style_cell_conditional=[
+                {'if': {'column_id': 'countriesAndTerritories'},
+                 'width': '40%', 'textAlign': 'left'},
+                {'if': {'column_id': 'deaths'},
+                 'width': '30%', 'textAlign': 'left'},
+                {'if': {'column_id': 'cases'},
+                 'width': '30%', 'textAlign': 'left'},
+            ],
+        ),
+    ],className='row'),
 
-    html.Div(
-    children = [ 
+    html.Div([
+        html.Div([
+            dcc.Dropdown(id='linedropdown',
+                options=[
+                         {'label': 'Deaths', 'value': 'deaths'},
+                         {'label': 'Cases', 'value': 'cases'}
+                ],
+                value='deaths',
+                multi=False,
+                clearable=False
+            ),
+        ],className='six columns'),
 
-    html.Div(
-    children=[
-    html.H3(children='Category-Miles',style={'text-align': 'center'}),
-    html.Div(children='''Category wise analysis''',className="one-third column"),
-    dcc.Graph(id='example-graph1',figure={'data': [trace1, trace2],'layout':go.Layout( barmode='stack')})
+        html.Div([
+        dcc.Dropdown(id='piedropdown',
+            options=[
+                     {'label': 'Deaths', 'value': 'deaths'},
+                     {'label': 'Cases', 'value': 'cases'}
+            ],
+            value='cases',
+            multi=False,
+            clearable=False
+        ),
+        ],className='six columns'),
 
-    ],className="six columns"),
+    ],className='row'),
 
+    html.Div([
+        html.Div([
+            dcc.Graph(id='linechart'),
+        ],className='six columns'),
 
-    html.Div(
-    children=[
-    html.H3(children='Month-Miles',style={'text-align': 'center'}),
-    html.Div(children='''Category wise analysis''',className="one-third column"),
-    dcc.Graph(id='example-graph2',figure = fig)
+        html.Div([
+            dcc.Graph(id='piechart'),
+        ],className='six columns'),
 
-    ],className="six columns"),
-
-    ], className="row"),
-
-    html.Div(
-    children = [ 
-
-    html.Div(
-    children=[
-    html.H3(children='Category-Miles',style={'text-align': 'center'}),
-    html.Div(children='''Category wise analysis''',className="one-third column"),
-    dcc.Graph(id='example-graph3',figure=fig2)
-
-    ],className="six columns"),
+    ],className='row'),
 
 
-    html.Div(
-    children=[
-    html.H3(children='percet of bees colonies',style={'text-align': 'center'}),
-    html.Div(children='''Category wise analysis''',className="one-third column"),
-    dcc.Graph(id='example-graph4',figure = fig3)
-
-    ],className="six columns"),
-
-    ], className="row")
 ])
 
+#------------------------------------------------------------------
+@app.callback(
+    [Output('piechart', 'figure'),
+     Output('linechart', 'figure')],
+    [Input('datatable_id', 'selected_rows'),
+     Input('piedropdown', 'value'),
+     Input('linedropdown', 'value')]
+)
+def update_data(chosen_rows,piedropval,linedropval):
+    if len(chosen_rows)==0:
+        df_filterd = dff[dff['countriesAndTerritories'].isin(['China','Iran','Spain','Italy'])]
+    else:
+        print(chosen_rows)
+        df_filterd = dff[dff.index.isin(chosen_rows)]
+
+    pie_chart=px.pie(
+            data_frame=df_filterd,
+            names='countriesAndTerritories',
+            values=piedropval,
+            hole=.3,
+            labels={'countriesAndTerritories':'Countries'}
+            )
 
 
+    #extract list of chosen countries
+    list_chosen_countries=df_filterd['countriesAndTerritories'].tolist()
+    #filter original df according to chosen countries
+    #because original df has all the complete dates
+    df_line = df[df['countriesAndTerritories'].isin(list_chosen_countries)]
+
+    line_chart = px.line(
+            data_frame=df_line,
+            x='dateRep',
+            y=linedropval,
+            color='countriesAndTerritories',
+            labels={'countriesAndTerritories':'Countries', 'dateRep':'date'},
+            )
+    line_chart.update_layout(uirevision='foo')
+
+    return (pie_chart,line_chart)
+
+#------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run_server(debug=True)
