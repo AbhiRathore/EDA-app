@@ -1,29 +1,115 @@
-import os
+import pandas as pd
+import plotly.express as px  
+import plotly.graph_objects as go
 
-import dash
+import dash  
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output
+from datetime import datetime
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+external_stylesheets =  ['https://codepen.io/chriddyp/pen/bWLwgP.css'] ## css sheet
+
+app = dash.Dash(__name__,external_stylesheets=external_stylesheets)
 server = app.server
 
+
+df = pd.read_csv('uberdrive.csv')
+beesdf = pd.read_csv("intro_bees.csv")
+df.columns = df.columns.str.replace("*", "")
+df = df[df['START_DATE'] != "Totals" ]
+
+df['start_dt'] = df['START_DATE'].apply(lambda x : datetime.strptime(x, '%m/%d/%Y %H:%M'))
+df['end_dt'] = df['END_DATE'].apply(lambda x : datetime.strptime(x, '%m/%d/%Y %H:%M'))
+
+
+df['start_day'] = df['start_dt'].dt.day
+df['start_hour'] = df['start_dt'].dt.hour
+df['start_month'] = df['start_dt'].dt.month
+df['start_month_name'] = df['start_dt'].dt.month_name()
+
+
+pv = pd.pivot_table(df, index=['PURPOSE'], columns=["CATEGORY"], values=['MILES'], aggfunc=sum, fill_value=0)
+
+
+###################################### plots 
+
+trace1 = go.Bar(x=pv.index, y=pv[('MILES', 'Business')], name='Business')
+trace2 = go.Bar(x=pv.index, y=pv[('MILES', 'Personal')], name='Personal')
+
+df_t2 = pd.DataFrame(df.groupby(['start_month_name'])['MILES'].agg('sum'))
+fig = px.line(df_t2.reset_index(), x = 'start_month_name', y = 'MILES')
+
+fig2 = px.box(df,x = 'PURPOSE' ,y = 'MILES')
+
+fig3 = px.choropleth(
+        data_frame=beesdf,
+        locationmode='USA-states',
+        locations='state_code',
+        scope="usa",
+        color='Pct of Colonies Impacted',
+        hover_data=['State', 'Pct of Colonies Impacted'],
+        color_continuous_scale=px.colors.sequential.YlOrRd,
+        labels={'Pct of Colonies Impacted': '% of Bee Colonies'},
+        template='plotly_dark'
+    )
+# ------------------------------------------------------------------------------
+# App layout
+
 app.layout = html.Div([
-    html.H2('Hello World'),
-    dcc.Dropdown(
-        id='dropdown',
-        options=[{'label': i, 'value': i} for i in ['LA', 'NYC', 'MTL']],
-        value='LA'
-    ),
-    html.Div(id='display-value')
+    html.H1('UBER drive analysis',style={'text-align': 'center'}),
+
+    html.Div(
+    children = [ 
+
+    html.Div(
+    children=[
+    html.H3(children='Category-Miles',style={'text-align': 'center'}),
+    html.Div(children='''Category wise analysis''',className="one-third column"),
+    dcc.Graph(id='example-graph1',figure={'data': [trace1, trace2],'layout':go.Layout( barmode='stack')})
+
+    ],className="six columns"),
+
+
+    html.Div(
+    children=[
+    html.H3(children='Month-Miles',style={'text-align': 'center'}),
+    html.Div(children='''Category wise analysis''',className="one-third column"),
+    dcc.Graph(id='example-graph2',figure = fig)
+
+    ],className="six columns"),
+
+    ], className="row"),
+
+    html.Div(
+    children = [ 
+
+    html.Div(
+    children=[
+    html.H3(children='Category-Miles',style={'text-align': 'center'}),
+    html.Div(children='''Category wise analysis''',className="one-third column"),
+    dcc.Graph(id='example-graph3',figure=fig2)
+
+    ],className="six columns"),
+
+
+    html.Div(
+    children=[
+    html.H3(children='percet of bees colonies',style={'text-align': 'center'}),
+    html.Div(children='''Category wise analysis''',className="one-third column"),
+    dcc.Graph(id='example-graph4',figure = fig3)
+
+    ],className="six columns"),
+
+    ], className="row")
+
+
+
+
 ])
 
-@app.callback(dash.dependencies.Output('display-value', 'children'),
-              [dash.dependencies.Input('dropdown', 'value')])
-def display_value(value):
-    return 'You have selected "{}"'.format(value)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
