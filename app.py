@@ -97,7 +97,7 @@ app.layout = html.Div([
 
     html.Div(
     children=[
-    html.H3(children='percet of bees colonies',style={'text-align': 'center'}),
+    html.H3(children='percent of bees colonies',style={'text-align': 'center'}),
     html.Div(children='''Category wise analysis''',className="one-third column"),
     dcc.Graph(id='example-graph4',figure = fig3)
 
