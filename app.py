@@ -10,7 +10,6 @@ import plotly.graph_objs as go
 import plotly.express as px ## 4.4.1
 
 from scipy.stats import zscore
-import matplotlib.pyplot as plt
 
 from time import time  # To time our operations
 from collections import defaultdict  # For word frequency
