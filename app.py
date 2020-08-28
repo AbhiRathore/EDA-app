@@ -26,7 +26,9 @@ colors = {
     'text': '#7FDBFF'
 }
 
-revDF=pd.read_csv(datapath + '/zomato.csv')
+#revDF=pd.read_csv(datapath + '/zomato.csv')
+revDF=pd.read_csv(datapath + '/smallzomato.csv')
+
 total_Rest_type = list(set(revDF['rest_type'].unique()))
 total_Rest_type_clean = []
 
@@ -297,8 +299,8 @@ def update_output(value):
     dash.dependencies.Input('cusin_dropdown', 'value')])
 
 def update_output(location,cusvalue):
-    print('lvalue is {}'.format(location))
-    print('value is {}'.format(cusvalue))
+    print('location is {}'.format(location))
+    print('cusvalue is {}'.format(cusvalue))
         
         
     revDF['rate2'] = revDF['rate'].apply(lambda x : ratingfinder(x))
